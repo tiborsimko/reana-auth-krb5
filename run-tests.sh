@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # This file is part of REANA.
-# Copyright (C) 2024 CERN.
+# Copyright (C) 2024, 2025 CERN.
 #
 # REANA is free software; you can redistribute it and/or modify it
 # under the terms of the MIT License; see LICENSE file for more details.
@@ -9,11 +9,23 @@
 set -o errexit
 set -o nounset
 
-check_commitlint () {
+docker_build() {
+    make build
+}
+
+docker_test() {
+    make test
+}
+
+lint_commitlint() {
     from=${2:-master}
     to=${3:-HEAD}
     pr=${4:-[0-9]+}
-    npx commitlint --from="$from" --to="$to"
+    if command -v commitlint >/dev/null 2>&1; then
+        commitlint --from="$from" --to="$to"
+    else
+        npx commitlint --from="$from" --to="$to"
+    fi
     found=0
     while IFS= read -r line; do
         commit_hash=$(echo "$line" | cut -d ' ' -f 1)
@@ -31,7 +43,7 @@ check_commitlint () {
         # (iii) check absence of merge commits in feature branches
         if [ "$commit_number_of_parents" -gt 1 ]; then
             if echo "$commit_title" | grep -qE "^chore\(.*\): merge "; then
-                break  # skip checking maint-to-master merge commits
+                break # skip checking maint-to-master merge commits
             else
                 echo "✖   Merge commits are not allowed in feature branches: $commit_title"
                 found=1
@@ -43,23 +55,47 @@ check_commitlint () {
     fi
 }
 
-check_shellcheck () {
+lint_hadolint() {
+    make lint
+}
+
+lint_shellcheck() {
     find . -name "*.sh" -exec shellcheck {} \+
 }
 
-check_all () {
-    check_commitlint
-    check_shellcheck
+all() {
+    docker_build
+    docker_test
+    lint_commitlint
+    lint_hadolint
+    lint_shellcheck
+}
+
+help() {
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  --all                Perform all checks [default]"
+    echo "  --docker-build       Check Docker build"
+    echo "  --docker-test        Check Docker test"
+    echo "  --help               Display this help message"
+    echo "  --lint-commitlint    Check linting of commit messages"
+    echo "  --lint-hadolint      Check linting of Dockerfiles"
+    echo "  --lint-shellcheck    Check linting of shell scripts"
 }
 
 if [ $# -eq 0 ]; then
-    check_all
+    all
     exit 0
 fi
 
 arg="$1"
 case $arg in
-    --check-commitlint) check_commitlint "$@";;
-    --check-shellcheck) check_shellcheck;;
-    *) echo "[ERROR] Invalid argument '$arg'. Exiting." && exit 1;;
+--all) all ;;
+--help) help ;;
+--docker-build) docker_build ;;
+--docker-test) docker_test ;;
+--lint-commitlint) lint_commitlint "$@" ;;
+--lint-hadolint) lint_hadolint ;;
+--lint-shellcheck) lint_shellcheck ;;
+*) echo "[ERROR] Invalid argument '$arg'. Exiting." && help && exit 1 ;;
 esac
