@@ -17,6 +17,14 @@ docker_test() {
     make test
 }
 
+format_prettier() {
+    prettier -c .
+}
+
+format_shfmt() {
+    shfmt -d .
+}
+
 lint_commitlint() {
     from=${2:-master}
     to=${3:-HEAD}
@@ -70,6 +78,7 @@ lint_yamllint() {
 all() {
     docker_build
     docker_test
+    format_shfmt
     lint_commitlint
     lint_hadolint
     lint_shellcheck
@@ -82,6 +91,7 @@ help() {
     echo "  --all                Perform all checks [default]"
     echo "  --docker-build       Check Docker build"
     echo "  --docker-test        Check Docker test"
+    echo "  --format-shfmt       Check formatting of shell scripts"
     echo "  --help               Display this help message"
     echo "  --lint-commitlint    Check linting of commit messages"
     echo "  --lint-hadolint      Check linting of Dockerfiles"
@@ -100,6 +110,7 @@ case $arg in
 --help) help ;;
 --docker-build) docker_build ;;
 --docker-test) docker_test ;;
+--format-shfmt) format_shfmt ;;
 --lint-commitlint) lint_commitlint "$@" ;;
 --lint-hadolint) lint_hadolint ;;
 --lint-shellcheck) lint_shellcheck ;;

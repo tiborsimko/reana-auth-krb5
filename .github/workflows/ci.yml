@@ -21,6 +21,17 @@ jobs:
       - name: Test image
         run: ./run-tests.sh --docker-test
 
+  format-shfmt:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check shell script code formatting
+        run: |
+          sudo apt-get install shfmt
+          ./run-tests.sh --format-shfmt
+
   lint-commitlint:
     runs-on: ubuntu-24.04
     steps:
