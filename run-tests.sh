@@ -63,6 +63,10 @@ lint_commitlint() {
     fi
 }
 
+lint_markdownlint() {
+    markdownlint-cli2 "**/*.md"
+}
+
 lint_hadolint() {
     make lint
 }
@@ -81,6 +85,7 @@ all() {
     format_shfmt
     lint_commitlint
     lint_hadolint
+    lint_markdownlint
     lint_shellcheck
     lint_yamllint
 }
@@ -95,6 +100,7 @@ help() {
     echo "  --help               Display this help message"
     echo "  --lint-commitlint    Check linting of commit messages"
     echo "  --lint-hadolint      Check linting of Dockerfiles"
+    echo "  --lint-markdownlint  Check linting of Markdown files"
     echo "  --lint-shellcheck    Check linting of shell scripts"
     echo "  --lint-yamllint      Check linting of YAML files"
 }
@@ -113,6 +119,7 @@ case $arg in
 --format-shfmt) format_shfmt ;;
 --lint-commitlint) lint_commitlint "$@" ;;
 --lint-hadolint) lint_hadolint ;;
+--lint-markdownlint) lint_markdownlint ;;
 --lint-shellcheck) lint_shellcheck ;;
 --lint-yamllint) lint_yamllint ;;
 *) echo "[ERROR] Invalid argument '$arg'. Exiting." && help && exit 1 ;;
